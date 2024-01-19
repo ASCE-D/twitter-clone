@@ -10,7 +10,26 @@ import { useCurrentUser, useLikedStatus } from "@/hooks/user";
 import { VscHeart, VscHeartFilled } from "react-icons/vsc";
 import { IconHoverEffect } from "./IconHoverEffect";
 import { useCreateTweet, useLikeTweet } from "@/hooks/tweet";
-
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "../ui/textarea";
+import toast from "react-hot-toast";
 
 interface FeedCardProps {
   data: Tweet;
@@ -73,19 +92,74 @@ const FeedCard: React.FC<FeedCardProps> = (props) => {
   // const HeartIcon = liked ? VscHeartFilled : VscHeart;
   const { mutateAsync } = useLikeTweet();
   const [isLiked, setIsLiked] = useState(false);
-  
-  useEffect(() => {}, [isLiked, liked]);
-  
+  const [content, setContent] = useState("");
+  const [imageURL, setImageURL] = useState("");
 
-  const handleToggleLike = async(id: string) => {
+  useEffect(() => {}, [isLiked, liked]);
+
+  const handleToggleLike = async (id: string) => {
     // Toggle the like status locally
     // setIsLiked((prevIsLiked) => !prevIsLiked);
     // Use the mutate function from the useLikeTweet hook
     await mutateAsync(id);
   };
 
+  const handleCreateComment = useCallback(async () => {
+    if (!content.trim()) {
+      // If content is empty, show an error message or take appropriate action
+      toast.error("Tweet content cannot be empty");
+      return;
+    }
+    console.log(content);
+    // await mutateAsync({
+    //   content,
+    //   imageURL,
+    // });
+    setContent("");
+    setImageURL("");
+  }, [mutateAsync, content, imageURL]);
+
   return (
     <div className="border border-r-0 border-l-0 border-b-0 border-gray-600 p-5 hover:bg-slate-900 transition-all cursor-pointer">
+      {/* <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-200 bg-opacity-40 p-4 rounded-md shadow-md">
+        <Card className="w-[600px]">
+          <CardHeader>
+            <CardTitle>Create comment</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form>
+              <div className="grid w-full items-center gap-4">
+                <div className="flex flex-col space-y-3.5">
+                  <Label htmlFor="comment">Comment</Label>
+                  <Textarea
+                    placeholder="Type your message here."
+                    onChange={(e) => setContent(e.target.value)}
+                  />
+                </div>
+                <div className="flex flex-col space-y-1.5">
+                  <Label htmlFor="framework">Framework</Label>
+                  <Select>
+                    <SelectTrigger id="framework">
+                      <SelectValue placeholder="Select" />
+                    </SelectTrigger>
+                    <SelectContent position="popper">
+                      <SelectItem value="next">Next.js</SelectItem>
+                      <SelectItem value="sveltekit">SvelteKit</SelectItem>
+                      <SelectItem value="astro">Astro</SelectItem>
+                      <SelectItem value="nuxt">Nuxt.js</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </form>
+          </CardContent>
+          <CardFooter className="flex justify-between mt-6">
+            <Button variant="outline">Cancel</Button>
+            <Button onClick={handleCreateComment}>Deploy</Button>
+          </CardFooter>
+        </Card>
+      </div> */}
+
       <div className="grid grid-cols-12 gap-3">
         <div className="col-span-1">
           {data.user?.profileImageURL && (
@@ -105,9 +179,10 @@ const FeedCard: React.FC<FeedCardProps> = (props) => {
             </Link>
           </h5>
           <p>{data.content}</p>
-          {data.profileImageURL && (
+          {/* <p>{data.imageURL}</p> */}
+          {data.imageURL && (
             <Image
-              src={data.profileImageURL}
+              src={data.imageURL}
               alt="image"
               width={400}
               height={400}

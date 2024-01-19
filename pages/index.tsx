@@ -15,6 +15,7 @@ import {
 import axios from "axios";
 import { toast } from "react-hot-toast";
 
+
 interface HomeProps {
   tweets?: Tweet[];
 }
@@ -69,6 +70,11 @@ export default function Home(props: HomeProps) {
   }, [handleInputChangeFile]);
 
   const handleCreateTweet = useCallback(async () => {
+    if (!content.trim()) {
+      // If content is empty, show an error message or take appropriate action
+      toast.error("Tweet content cannot be empty");
+      return;
+    }
     await mutateAsync({
       content,
       imageURL,

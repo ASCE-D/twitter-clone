@@ -143,7 +143,7 @@ const Twitterlayout: React.FC<TwitterlayoutProps> = (props) => {
             </div>
           )}
         </div>
-        <div className="col-span-10 sm:col-span-5 border-r-[1px] border-l-[1px] h-screen overflow-scroll border-gray-600">
+        <div className="col-span-10 sm:col-span-5 border-r-[1px] border-l-[1px] h-screen overflow-x-hidden border-gray-600 scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-gray-300">
           {props.children}
         </div>
         <div className="col-span-0 sm:col-span-3 p-5">

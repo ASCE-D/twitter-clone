@@ -50,16 +50,16 @@ export const useLikeTweet = () => {
       const addedLike = data.likeTweet?.addedLike; // Adjust this based on your actual response structure
 
       // Update the cache using React Query's queryClient
-      queryClient.setQueryData<GetAllTweetsResponse>(
+      queryClient.setQueryData(
         ["all-tweets"],
-        (oldData) => {
+        (oldData: any) => {
           if (!oldData) return oldData;
 
           const countModifier = addedLike ? 1 : -1;
 
           return {
             ...oldData,
-            getAllTweets: (oldData.getAllTweets || []).map((tweet) => {
+            getAllTweets: (oldData.getAllTweets || []).map((tweet: any) => {
               if (tweet?.id === variables) {
                 return {
                   ...tweet,

@@ -1,6 +1,12 @@
 import { graphqlClient } from "@/clients/api";
-import { CreateTweetData, LikeTweetMutation, Tweet } from "@/gql/graphql";
 import {
+  CreateCommentData,
+  CreateTweetData,
+  LikeTweetMutation,
+  Tweet,
+} from "@/gql/graphql";
+import {
+  createCommentMutation,
   createTweetMutation,
   likeTweetMutation,
 } from "@/graphql/mutation/tweet";
@@ -50,29 +56,62 @@ export const useLikeTweet = () => {
       const addedLike = data.likeTweet?.addedLike; // Adjust this based on your actual response structure
 
       // Update the cache using React Query's queryClient
-      queryClient.setQueryData(
-        ["all-tweets"],
-        (oldData: any) => {
-          if (!oldData) return oldData;
+      queryClient.setQueryData(["all-tweets"], (oldData: any) => {
+        if (!oldData) return oldData;
 
-          const countModifier = addedLike ? 1 : -1;
+        const countModifier = addedLike ? 1 : -1;
+        return {
+          ...oldData,
+          getAllTweets: (oldData.getAllTweets || []).map((tweet: any) => {
+            if (tweet?.id === variables) {
+              return {
+                ...tweet,
+                likeCount: (tweet.likeCount || 0) + countModifier,
+                likedByMe: !tweet.likedByMe,
+              };
+            }
 
-          return {
-            ...oldData,
-            getAllTweets: (oldData.getAllTweets || []).map((tweet: any) => {
-              if (tweet?.id === variables) {
-                return {
-                  ...tweet,
-                  likeCount: (tweet.likeCount || 0) + countModifier,
-                  likedByMe: !tweet.likedByMe,
-                };
-              }
+            return tweet;
+          }),
+        };
+      });
 
-              return tweet;
-            }),
-          };
-        }
-      );
+      // You can perform actions after the mutation is successful
+    },
+  });
+
+  return mutation;
+};
+
+export const useCommentTweet = () => {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: (payload: CreateCommentData) =>
+      graphqlClient.request(createCommentMutation, { payload }),
+    onMutate: (payload) => toast.loading("Creating comment", { id: "1" }),
+    onSuccess: async (data, variables, context) => {
+      const addedComment = data.createComment?.id ? true : false; // Adjust this based on your actual response structure
+
+      // Update the cache using React Query's queryClient
+      await queryClient.setQueryData(["all-tweets"], (oldData: any) => {
+        if (!oldData) return oldData;
+
+        const countModifier = addedComment ? 1 : -1;
+        return {
+          ...oldData,
+          getAllTweets: (oldData.getAllTweets || []).map((tweet: any) => {
+            if (tweet?.id === variables.tweetId) {
+              return {
+                ...tweet,
+                commentCount: (tweet.commentCount || 0) + countModifier,
+              };
+            }
+            return tweet;
+          }),
+        };
+      });
+      toast.success("Created Success", { id: "1" });
 
       // You can perform actions after the mutation is successful
     },

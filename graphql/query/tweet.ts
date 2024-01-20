@@ -5,6 +5,7 @@ export const getAllTweetsQuery = graphql(`
   query GetAllTweets {
     getAllTweets {
       likeCount
+      commentCount
       likedByMe
       content
       id

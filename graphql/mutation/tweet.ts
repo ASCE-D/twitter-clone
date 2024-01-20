@@ -17,3 +17,15 @@ export const likeTweetMutation = graphql(`
     }
   }
 `);
+
+export const createCommentMutation = graphql(`
+  #graphql
+  mutation CreateComment($payload: CreateCommentData!) {
+    createComment(payload: $payload) {
+      id
+      content
+      imageURL
+      userId
+    }
+  }
+`);

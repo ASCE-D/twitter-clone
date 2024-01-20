@@ -9,7 +9,7 @@ import { useCurrentUser, useLikedStatus } from "@/hooks/user";
 // import { IconHoverEffect } from "./IconHoverEffect";
 import { VscHeart, VscHeartFilled } from "react-icons/vsc";
 import { IconHoverEffect } from "./IconHoverEffect";
-import { useCreateTweet, useLikeTweet } from "@/hooks/tweet";
+import { useCommentTweet, useCreateTweet, useLikeTweet } from "@/hooks/tweet";
 import {
   Card,
   CardContent,
@@ -18,6 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -87,13 +88,16 @@ function HeartButton({
 
 const FeedCard: React.FC<FeedCardProps> = (props) => {
   const { data } = props;
-  // const { user } = useCurrentUser();
+  const { user } = useCurrentUser();
   const { liked, isLoading, isError } = useLikedStatus(data?.id);
   // const HeartIcon = liked ? VscHeartFilled : VscHeart;
-  const { mutateAsync } = useLikeTweet();
+  const { mutateAsync: likeMutateAsync } = useLikeTweet();
+  const { mutateAsync: commentMutateAsync } = useCommentTweet();
+
   const [isLiked, setIsLiked] = useState(false);
   const [content, setContent] = useState("");
   const [imageURL, setImageURL] = useState("");
+  const [showCommentForm, setShowCommentForm] = useState(false);
 
   useEffect(() => {}, [isLiked, liked]);
 
@@ -101,64 +105,105 @@ const FeedCard: React.FC<FeedCardProps> = (props) => {
     // Toggle the like status locally
     // setIsLiked((prevIsLiked) => !prevIsLiked);
     // Use the mutate function from the useLikeTweet hook
-    await mutateAsync(id);
+    await likeMutateAsync(id);
   };
 
-  const handleCreateComment = useCallback(async () => {
-    if (!content.trim()) {
-      // If content is empty, show an error message or take appropriate action
-      toast.error("Tweet content cannot be empty");
-      return;
-    }
-    console.log(content);
-    // await mutateAsync({
-    //   content,
-    //   imageURL,
-    // });
-    setContent("");
-    setImageURL("");
-  }, [mutateAsync, content, imageURL]);
+  const handleCommentForm = () => {
+    !user ? toast.error("please login") : setShowCommentForm(true);
+  };
+
+  const handleCreateComment = useCallback(
+    async (tweetId: string) => {
+      if (!content.trim()) {
+        // If content is empty, show an error message or take appropriate action
+        toast.error("Tweet content cannot be empty");
+        return;
+      }
+      commentMutateAsync({
+        content,
+        tweetId,
+        imageURL: imageURL ? imageURL : null,
+      });
+      console.log({
+        content,
+        tweetId,
+        imageURL: imageURL ? imageURL : null,
+      });
+
+      // await mutateAsync({
+      //   content,
+      //   imageURL,
+      // });
+      setContent("");
+      setImageURL("");
+      setShowCommentForm(false);
+    },
+    [commentMutateAsync, content, imageURL]
+  );
 
   return (
     <div className="border border-r-0 border-l-0 border-b-0 border-gray-600 p-5 hover:bg-slate-900 transition-all cursor-pointer">
-      {/* <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-200 bg-opacity-40 p-4 rounded-md shadow-md">
-        <Card className="w-[600px]">
-          <CardHeader>
-            <CardTitle>Create comment</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form>
-              <div className="grid w-full items-center gap-4">
-                <div className="flex flex-col space-y-3.5">
-                  <Label htmlFor="comment">Comment</Label>
-                  <Textarea
-                    placeholder="Type your message here."
-                    onChange={(e) => setContent(e.target.value)}
-                  />
+      {showCommentForm && (
+        <div className="fixed top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-200 bg-opacity-40 p-4 rounded-md shadow-md">
+          <Card className="w-[600px]">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Avatar>
+                  {data.user?.profileImageURL && (
+                    <AvatarImage src={data.user.profileImageURL} />
+                  )}
+                  <AvatarFallback>CN</AvatarFallback>
+                </Avatar>
+                <div className="ml-10 mt-6 flex flex-col">
+                  <Label className=" text-xl">{data.user?.firstName}</Label>
+                  <Label className=" text-lg">{data.content}</Label>
                 </div>
-                <div className="flex flex-col space-y-1.5">
-                  <Label htmlFor="framework">Framework</Label>
-                  <Select>
-                    <SelectTrigger id="framework">
-                      <SelectValue placeholder="Select" />
-                    </SelectTrigger>
-                    <SelectContent position="popper">
-                      <SelectItem value="next">Next.js</SelectItem>
-                      <SelectItem value="sveltekit">SvelteKit</SelectItem>
-                      <SelectItem value="astro">Astro</SelectItem>
-                      <SelectItem value="nuxt">Nuxt.js</SelectItem>
-                    </SelectContent>
-                  </Select>
+              </CardTitle>
+              <CardDescription className="ml-12 mt-6">
+                Replying to {data.user?.firstName}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form>
+                <div className="grid w-full items-center gap-4">
+                  <div className="flex flex-col space-y-3.5">
+                    <Label htmlFor="comment">Comment</Label>
+                    <Textarea
+                      placeholder="Post your reply"
+                      onChange={(e) => setContent(e.target.value)}
+                    />
+                  </div>
+                  {/* <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="framework">Framework</Label>
+                    <Select>
+                      <SelectTrigger id="framework">
+                        <SelectValue placeholder="Select" />
+                      </SelectTrigger>
+                      <SelectContent position="popper">
+                        <SelectItem value="next">Next.js</SelectItem>
+                        <SelectItem value="sveltekit">SvelteKit</SelectItem>
+                        <SelectItem value="astro">Astro</SelectItem>
+                        <SelectItem value="nuxt">Nuxt.js</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div> */}
                 </div>
-              </div>
-            </form>
-          </CardContent>
-          <CardFooter className="flex justify-between mt-6">
-            <Button variant="outline">Cancel</Button>
-            <Button onClick={handleCreateComment}>Deploy</Button>
-          </CardFooter>
-        </Card>
-      </div> */}
+              </form>
+            </CardContent>
+            <CardFooter className="flex justify-between mt-6">
+              <Button
+                variant="outline"
+                onClick={() => setShowCommentForm(false)}
+              >
+                Cancel
+              </Button>
+              <Button onClick={() => handleCreateComment(data.id)}>
+                Reply
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
+      )}
 
       <div className="grid grid-cols-12 gap-3">
         <div className="col-span-1">
@@ -181,16 +226,12 @@ const FeedCard: React.FC<FeedCardProps> = (props) => {
           <p>{data.content}</p>
           {/* <p>{data.imageURL}</p> */}
           {data.imageURL && (
-            <Image
-              src={data.imageURL}
-              alt="image"
-              width={400}
-              height={400}
-            />
+            <Image src={data.imageURL} alt="image" width={400} height={400} />
           )}
           <div className="flex justify-between mt-5 text-xl items-center p-2 w-[90%]">
-            <div>
-              <BiMessageRounded />
+            <div className="flex items-center space-x-2">
+              <BiMessageRounded onClick={handleCommentForm} />
+              <Label>{data.commentCount}</Label>
             </div>
             <div>
               <FaRetweet />
@@ -200,7 +241,7 @@ const FeedCard: React.FC<FeedCardProps> = (props) => {
               isLoading={isLoading}
               liked={data.likedByMe}
               likeCount={data.likeCount}
-              authenticated={data.id ? true : false}
+              authenticated={user ? true : false}
             />
             <div>
               <BiUpload />
